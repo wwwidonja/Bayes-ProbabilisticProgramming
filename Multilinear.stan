@@ -10,7 +10,6 @@ data {
 }
 
 parameters {
-  real intercept;
   real br; // research
   real ba; //admin
   real bm; //admin
@@ -19,12 +18,11 @@ parameters {
 
 model {
   // beta prior
-  intercept ~ normal(0, 20);
   br ~ normal(0, 20);
   ba ~ normal(0, 20);
   bm ~ normal(0, 20);
   sigma ~ cauchy(0, 20);
   
   // model
-  profit ~ normal(intercept + research * br + admin * ba + marketing * bm, sigma);
+  profit ~ normal(research * br + admin * ba + marketing * bm, sigma);
 }

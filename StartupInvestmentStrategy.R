@@ -64,13 +64,14 @@ fit$summary()
 mcse(df$ba)
 #extracting betas for plot titles
 df <- as_draws_df(fit$draws())
-brest <- round(mcse(df$br)$est,2)
-baest <- round(mcse(df$ba)$est,2)
-bmest <- round(mcse(df$bm)$est,2)
-
-a <- dnorm(mcse(df$br)$est, mcse(df$br)$se)
-
-
+brest <- round(mcse(df$br)$est,4)
+baest <- round(mcse(df$ba)$est,4)
+bmest <- round(mcse(df$bm)$est,4)
+round(mcse(df$bm)$est,4)
+## extracting certainty
+round(sum(df$br>df$ba)/nrow(df),4)
+round(sum(df$br>df$bm)/nrow(df),4)
+round(sum(df$ba>df$bm)/nrow(df),4)
 ### 1000 samples
 df_100 <- drop_na(sample_n(df, 100))
 
@@ -78,29 +79,29 @@ df_100 <- drop_na(sample_n(df, 100))
 p1 <- ggplot() + 
   geom_point(data=data, aes(x=research, y=profit), shape=16, color="#537fe0") +
   geom_smooth(data=data, aes(x=research, y=profit, color="research"), method='lm', color="#537fe0")+
-  theme_cowplot() + labs(title=expr(beta[r] %~~% !!brest)) +scale_x_continuous(labels = human_num)
+  theme_cowplot() + labs(title=expr(beta[r] %~~% !!brest)) +scale_x_continuous(limits=c(0, 400000), labels = human_num) + scale_y_continuous(limits=c(40000, 160000), labels = human_num)
 
 
 p2 <- ggplot() + 
   geom_point(data=data, aes(x=marketing, y=profit), shape=16, color="#e340b2") +
   geom_smooth(data=data, aes(x=marketing, y=profit, color="marketing"), method='lm', color="#e340b2") +
-  theme_cowplot() + labs(title=expr(beta[m] %~~% !!bmest)) + theme(legend.position="none")+scale_x_continuous(labels = human_num)
+  theme_cowplot() + labs(title=expr(beta[m] %~~% !!bmest)) + theme(legend.position="none")+scale_x_continuous(limits=c(0, 400000), labels = human_num) + scale_y_continuous(limits=c(40000, 160000), labels = human_num)
 
 p3<- ggplot() + 
   geom_point(data=data, aes(x=administration, y=profit), shape=16, color="#4bbf43") +
   geom_smooth(data=data, aes(x=administration, y=profit, color="admin"), method='lm', color="#4bbf43") +
-  theme_cowplot() + theme(legend.position="none") + labs(title=expr(beta[a] %~~% !!baest))+scale_x_continuous(labels = human_num)
+  theme_cowplot() + theme(legend.position="none") + labs(title=expr(beta[a] %~~% !!baest))+scale_x_continuous(limits=c(0, 400000), labels = human_num) + scale_y_continuous(limits=c(40000, 160000), labels = human_num)
 p4 <- ggplot() + 
   geom_point(data=data, aes(x=0.72*research + 0.33*administration + 0.08*marketing, y=profit), shape=16, color="#e6ca3e") +
   geom_smooth(data=data, aes(x=0.72*research + 0.33*administration + 0.08*marketing, y=profit, color="composite"),method='lm') +
-  geom_abline(data=df_100, aes(slope=ba, intercept=intercept, color="admin"), alpha=0.05, size=1)+
-  geom_abline(data=df_100, aes(slope=bm, intercept=intercept, color="marketing"), alpha=0.05, size=1)+
-  geom_abline(data=df_100, aes(slope=br, intercept=intercept, color="research"), alpha=0.05, size=1)+
+  geom_abline(data=df_100, aes(slope=ba, intercept=0, color="admin"), alpha=0.05, size=1)+
+  geom_abline(data=df_100, aes(slope=bm, intercept=0, color="marketing"), alpha=0.05, size=1)+
+  geom_abline(data=df_100, aes(slope=br, intercept=0, color="research"), alpha=0.05, size=1)+
   theme_cowplot() +
     labs(title='Composite ML regression',
        x=expr(beta[r]*research + beta[m]*marketing + beta[a]*administration),
        color="Investment sector") + scale_color_manual(values=c("#4bbf43", "#e6ca3e", "#e340b2", "#537fe0")) + theme(legend.position="none")+
-  scale_x_continuous(labels = human_num)
+  scale_x_continuous(labels = human_num) + scale_y_continuous(limits=c(0, 160000), labels = human_num)
 
 legend_b <- get_legend(
   p4 + 
@@ -128,7 +129,7 @@ fit <- model$sample(
   seed = 1
 )
 df1 <- as_draws_df(fit$draws())
-
+sum(df1$ba>df1$br)/nrow(df1)
 
 
 
@@ -159,11 +160,11 @@ df3 <- as_draws_df(fit$draws())
 
 ###Plotting of the per-state distribution plot
 NY<-ggplot() + geom_density(data=df1, aes(x=br, fill="research"), alpha=0.7) + geom_density(data=df1, aes(x=ba, fill='admin'), alpha=0.7) + geom_density(data=df1, aes(x=bm, fill='marketing'), alpha=0.7) + ggtitle('New York')+
-  xlim(-0.1, 1.2)+theme_cowplot() + xlab(expression(beta))+ scale_fill_manual(values = c("#4bbf43", "#e340b2","#537fe0")) + theme(legend.position="none")
+  xlim(-0.1, 1.0)+theme_cowplot() + xlab(expression(beta))+ scale_fill_manual(values = c("#4bbf43", "#e340b2","#537fe0")) + theme(legend.position="none")
 Cali<-ggplot() + geom_density(data=df2, aes(x=br, fill='research'), alpha=0.7) + geom_density(data=df2, aes(x=ba, fill='admin'), alpha=0.7) + geom_density(data=df2, aes(x=bm, fill='marketing'), alpha=0.7) + ggtitle('California')+
-  xlim(-0.1, 1.2)+theme_cowplot() + xlab(expression(beta))+ scale_fill_manual(values = c("#4bbf43", "#e340b2","#537fe0")) + theme(legend.position="none")
+  xlim(-0.1, 1.0)+theme_cowplot() + xlab(expression(beta))+ scale_fill_manual(values = c("#4bbf43", "#e340b2","#537fe0")) + theme(legend.position="none")
 Flori<-ggplot() + geom_density(data=df3, aes(x=br, fill='research'), alpha=0.7) + geom_density(data=df3, aes(x=ba, fill='admin'), alpha=0.7) + geom_density(data=df3, aes(x=bm, fill='marketing'), alpha=0.7) + ggtitle('Florida')+
-  xlim(-0.1, 1.2)+theme_cowplot() + xlab(expression(beta)) + 
+  xlim(-0.1, 1.0)+theme_cowplot() + xlab(expression(beta)) + 
   scale_fill_manual(values = c("#4bbf43", "#e340b2","#537fe0")) + theme(legend.position="none") + labs(fill='Investment sector')
 
 legend_b <- get_legend(
@@ -172,3 +173,24 @@ legend_b <- get_legend(
     theme(legend.position = "bottom")
 )
 plot_grid(plot_grid(NY, Cali, Flori, ncol = 1),legend_b, rel_heights = c(1,0.1), ncol=1)
+
+
+
+### Task 3: What is the optimal investment strategy?
+##General:
+d<- df
+##Uncomment below for NY 
+#d <- df1
+
+##Uncomment below for Cali 
+#d <- df2
+
+##Uncomment below for Florida 
+#d <- df3
+
+pr <- round((mcse(d$br)$est / (mcse(d$br)$est + mcse(d$ba)$est + mcse(d$bm)$est))*100)
+pa <- round((mcse(d$ba)$est / (mcse(d$br)$est + mcse(d$ba)$est + mcse(d$bm)$est))*100)
+pm <- round((mcse(d$bm)$est / (mcse(d$br)$est + mcse(d$ba)$est + mcse(d$bm)$est))*100)
+print(paste0("research: ", pr, " admin: ", pa, " marketing: ",pm ))
+
+
